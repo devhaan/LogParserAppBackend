@@ -1,6 +1,8 @@
 // Importing the fs module
 let fs = require("fs");
 
+var path = require("path");
+
 const parser = (buffer) => {
   let tempString = [];
 
@@ -13,9 +15,7 @@ const parser = (buffer) => {
 };
 
 const logParserToJson = (seperatedLinesLogData) => {
-  let tempJson = [
-    
-  ];
+  let tempJson = [];
   seperatedLinesLogData.map((item) => {
     // object creater and inserter
     tempJson.push(arrToObject(item));
@@ -56,7 +56,7 @@ const arrToObject = (data) => {
   return tempObject;
 };
 
-module.exports.logConverter = (req, res) => {
+module.exports.logConverter = (req, res,next) => {
   console.log("react to post action - loadFile");
 
   //here all request files data took in buffer
@@ -67,7 +67,27 @@ module.exports.logConverter = (req, res) => {
   let seperatedLinesLogData = parser(buffer);
 
   //here file is converted and return in json file format
-  let ActualResponseDataLogParser=logParserToJson(seperatedLinesLogData);
+  let ActualResponseDataLogParser = logParserToJson(seperatedLinesLogData);
 
-  return res.json(ActualResponseDataLogParser);
+  // here json object into file converted json format
+  let data = JSON.stringify(ActualResponseDataLogParser, null, 2);
+
+  fs.writeFile(__dirname+"/parsed.json", data, (err) => {
+    if (err) throw err;
+    console.log("Data written to file");
+  });
+   let file_location=__dirname+"/parsed.json";
+   
+  fs.readFile(file_location,(err,content) => {
+    if(err){
+      res.writeHead(404,{"Content-type":"text/html"});
+       return res.end("<h1>NoT Converted");
+    }
+    else{
+      res.writeHead(200,{"Content-Type":"application/json"});
+       return res.end(content);
+    }
+  })
+  
+//return res.json(ActualResponseDataLogParser);
 };
